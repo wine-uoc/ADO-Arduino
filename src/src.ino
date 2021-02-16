@@ -1,4 +1,4 @@
-#include "main.h"
+#include "src.h"
 
 String inString, remainingstring; //incoming command from RPI
 String commandWords[2]; // word1 is command and sensor type; word2 is the array of parameters(max5) 
@@ -10,10 +10,12 @@ void setup()
 
   digitalWrite(CO2_cal_pin, HIGH); // AirCO2 CALIBRATION happens on LOW
   pinMode(CO2_cal_pin, OUTPUT);
+  digitalWrite(Sensors_Reset_pin, HIGH);
+  pinMode(Sensors_Reset_pin, OUTPUT);
 
-  Serial.begin(9600); //Starting serial communication
+  Serial1.begin(9600); //Starting serial communication
   //Serial1.begin(9600); //used for debuging mySerial
-  while (!Serial);
+  while (!Serial1);
 
   pinPeripheral(2, PIO_SERCOM);   // Assign pins 2 & 3 SERCOM0 functionality for mySerial
   pinPeripheral(3, PIO_SERCOM);   //this serial is for disabling CO2 automatic recalibration
@@ -92,8 +94,8 @@ void ProcessReading(int sensortype, String param_list[5])
   }
   else
   {
-    Serial.print(F("Compromized command: array[0] \n")); //safe in case of junk/compromised command
-    Serial.flush();
+    Serial1.print(F("Compromized command: array[0] \n")); //safe in case of junk/compromised command
+    Serial1.flush();
     return;
   } //invalid pin
 }
@@ -101,25 +103,25 @@ void ProcessReading(int sensortype, String param_list[5])
 //this function makes sure that we are not running out of RAM
 //store the constant part of the strings in Flash
 void HandlePrinting(int sensortype, int pin, float value, String addr){
-  Serial.print(F("[{\"bn\":\"ArduinoMKR1000\",\"sensorType\":\""));
-  Serial.print(sensortype);
-  Serial.print(F("\",\"parameter1\":"));
+  Serial1.print(F("[{\"bn\":\"ArduinoMKR1000\",\"sensorType\":\""));
+  Serial1.print(sensortype);
+  Serial1.print(F("\",\"parameter1\":"));
   if (addr == "0x40")
   {
-    Serial.print(F("\"0x40\""));
+    Serial1.print(F("\"0x40\""));
   }
   else if (addr == "NO") //no address
   {
-    Serial.print(pin);
+    Serial1.print(pin);
   }
   else 
   {
-    Serial.print(F("\"PinErr\""));
+    Serial1.print(F("\"PinErr\""));
   }
-  Serial.print(F(",\"pinValue\":"));
-  Serial.print(value);
-  Serial.print(F("}]\n")); //IMPORTANT! DO NOT PUT PRINTLN, AS THE STRING ALREADY CONTAINS \n
-  Serial.flush();
+  Serial1.print(F(",\"pinValue\":"));
+  Serial1.print(value);
+  Serial1.print(F("}]\n")); //IMPORTANT! DO NOT PUT PRINTLN, AS THE STRING ALREADY CONTAINS \n
+  Serial1.flush();
 
 }
 
@@ -145,14 +147,14 @@ void AverageReading(int sensortype, String param_list[5]){
       HandlePrinting(sensortype, pin, avg_reading, "NO"); //no address
     }
     else{
-      Serial.print(F("Compromized command: PIN_NB \n")); //safe in case of junk/compromised command
-      Serial.flush();
+      Serial1.print(F("Compromized command: PIN_NB \n")); //safe in case of junk/compromised command
+      Serial1.flush();
       return;
     }
   }
   else{
-    Serial.print(F("Compromized command: STYPE \n")); //safe in case of junk/compromised command
-    Serial.flush();
+    Serial1.print(F("Compromized command: STYPE \n")); //safe in case of junk/compromised command
+    Serial1.flush();
     return;
   }
 }
@@ -184,8 +186,8 @@ void SplitCommand(String command, String fullArray)
   }
   else 
   {
-    Serial.print(F("Compromized command: NUM_PARAM \n")); //safe in case of junk/compromised command
-    Serial.flush();
+    Serial1.print(F("Compromized command: NUM_PARAM \n")); //safe in case of junk/compromised command
+    Serial1.flush();
     return;
   }
 
@@ -209,8 +211,8 @@ void SplitCommand(String command, String fullArray)
   }
   else
   {
-    Serial.print(F("Unrecognized command: CTYPE \n")); //safe in case of junk/compromised command
-    Serial.flush();
+    Serial1.print(F("Unrecognized command: CTYPE \n")); //safe in case of junk/compromised command
+    Serial1.flush();
   }
 
 }
@@ -324,11 +326,11 @@ void loop()
   
   //original code following:
   //Serial.setTimeout(10000); //defaults to 1000ms
-  if (Serial.available() > 0)
+  if (Serial1.available() > 0)
   {
-    while (Serial.available() > 0)
+    while (Serial1.available() > 0)
     {
-      inString = Serial.readString();
+      inString = Serial1.readString();
       //Serial.print(F("Waiting serial "));
     }
       //Serial.println(inString);
@@ -343,8 +345,8 @@ void loop()
     }
     else
     {
-      Serial.print(F("Not OK\n"));
-      Serial.flush();
+      Serial1.print(F("Not OK\n"));
+      Serial1.flush();
     } 
 
   }
